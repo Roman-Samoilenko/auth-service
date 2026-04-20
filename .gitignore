@@ -1,1 +1,12 @@
 .env
+*lock.json
+*.log
+*.tmp
+*.env
+*.local
+*.swp
+.DS_Store
+.idea/
+.vscode/
+nginx.prod.conf
+docker-compose.prod.yml
