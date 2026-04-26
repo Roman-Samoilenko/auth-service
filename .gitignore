@@ -10,3 +10,6 @@
 .vscode/
 nginx.prod.conf
 docker-compose.prod.yml
+.env.*
+*.key
+*.pem

@@ -10,18 +10,12 @@ import (
 	"auth-service/internal/handler"
 	"auth-service/internal/repository/postgres"
 	"auth-service/internal/service"
-
-	"github.com/redis/go-redis/v9"
 )
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})))
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_ADDR"),
-	})
 
 	cfg := config.Load()
 
@@ -37,9 +31,9 @@ func main() {
 	// Dependency injection
 	userRepo := postgres.NewUserRepository(db)
 	codeRepo := postgres.NewCodeRepository(db)
-	authSvc := service.NewAuthService(userRepo, codeRepo, rdb, cfg)
+	authSvc := service.NewAuthService(userRepo, codeRepo, cfg)
 	authHandler := handler.NewAuthHandler(authSvc, cfg)
-	router := handler.NewRouter(authHandler, rdb)
+	router := handler.NewRouter(authHandler, cfg)
 
 	addr := ":" + cfg.HTTPPort
 	slog.Info("auth service starting", "addr", addr)

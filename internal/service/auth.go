@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/redis/go-redis/v9"
 
 	"auth-service/internal/config"
 	"auth-service/internal/domain"
@@ -34,19 +33,23 @@ var (
 var reNonDigits = regexp.MustCompile(`\D`)
 
 type AuthService struct {
-	users *postgres.UserRepository
-	codes *postgres.CodeRepository
-	rdb   *redis.Client
-	cfg   *config.Config
+	users  *postgres.UserRepository
+	codes  *postgres.CodeRepository
+	cfg    *config.Config
+	mailer *LetterSender
 }
 
 func NewAuthService(
 	users *postgres.UserRepository,
 	codes *postgres.CodeRepository,
-	rdb *redis.Client,
 	cfg *config.Config,
 ) *AuthService {
-	return &AuthService{users: users, codes: codes, rdb: rdb, cfg: cfg}
+	mailer, err := NewLetterSender(cfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to create letter sender: %w", err))
+	}
+
+	return &AuthService{users: users, codes: codes, cfg: cfg, mailer: mailer}
 }
 
 // SendCode отправляет код подтверждения по email, телефону и т.д.
@@ -78,7 +81,14 @@ func (s *AuthService) SendCode(ctx context.Context, req domain.SendCodeRequest) 
 
 	switch ctype {
 	case domain.ContactEmail:
-		slog.Info("email verification code (demo)", "email", contact, "code", code)
+		slog.Info("email verification code", "email", contact, "code", code)
+		if s.cfg.AWSRegion == "dev" || s.cfg.AWSAccesKeyID == "dev" || s.cfg.AWSSecretAccessKEY == "dev" {
+			slog.Info("dev mode: skipping email send")
+			return nil
+		}
+		if err := s.mailer.SendVerificationCode(ctx, contact, code); err != nil {
+			return fmt.Errorf("send email: %w", err)
+		}
 	case domain.ContactPhone:
 		slog.Info("sms verification code (demo)", "phone", contact, "code", code)
 	}
@@ -171,15 +181,16 @@ func (s *AuthService) RefreshTokens(ctx context.Context, refreshToken string) (*
 // checkTargetRateLimit проверяет лимит запросов для конкретной цели (хэша почты/номера)
 func (s *AuthService) checkTargetRateLimit(ctx context.Context, targetHash string, limit int, window time.Duration) error {
 	key := "rl:target:" + targetHash
+	rdb := s.cfg.RedisClient
 
-	count, err := s.rdb.Incr(ctx, key).Result()
+	count, err := rdb.Incr(ctx, key).Result()
 	if err != nil {
 		slog.Error("redis target rate limit incr failed", "err", err)
 		return nil // fail-open: при падении редиса пропускаем
 	}
 
 	if count == 1 {
-		s.rdb.Expire(ctx, key, window)
+		rdb.Expire(ctx, key, window)
 	}
 
 	if count > int64(limit) {

@@ -1,15 +1,16 @@
 package handler
 
 import (
+	"auth-service/internal/config"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/redis/go-redis/v9"
 )
 
-func NewRouter(auth *AuthHandler, rdb *redis.Client) http.Handler {
+func NewRouter(auth *AuthHandler, cfg *config.Config) http.Handler {
+	rdb := cfg.RedisClient
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)

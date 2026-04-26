@@ -3,15 +3,22 @@ package config
 import (
 	"os"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type Config struct {
-	HTTPPort        string
-	DatabaseURL     string
-	JWTSecret       string
-	ContactPepper   string
-	AccessTokenTTL  time.Duration
-	RefreshTokenTTL time.Duration
+	HTTPPort           string
+	DatabaseURL        string
+	JWTSecret          string
+	ContactPepper      string
+	AccessTokenTTL     time.Duration
+	RefreshTokenTTL    time.Duration
+	RedisClient        *redis.Client
+	AWSAccesKeyID      string
+	AWSSecretAccessKEY string
+	PostboxSender      string
+	AWSRegion          string
 }
 
 func Load() *Config {
@@ -22,6 +29,12 @@ func Load() *Config {
 		ContactPepper:   mustEnv("CONTACT_PEPPER"),
 		AccessTokenTTL:  parseDuration(getEnv("ACCESS_TOKEN_TTL", "15m")),
 		RefreshTokenTTL: parseDuration(getEnv("REFRESH_TOKEN_TTL", "168h")),
+		RedisClient: redis.NewClient(&redis.Options{
+			Addr: mustEnv("REDIS_ADDR")}),
+		AWSAccesKeyID:      mustEnv("AWS_ACCESS_KEY_ID"),
+		AWSSecretAccessKEY: mustEnv("AWS_SECRET_ACCESS_KEY"),
+		PostboxSender:      mustEnv("POSTBOX_SENDER"),
+		AWSRegion:          getEnv("AWS_REGION", "ru-central1"),
 	}
 }
 
