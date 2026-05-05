@@ -26,6 +26,7 @@ func NewRouter(auth *AuthHandler, cfg *config.Config) http.Handler {
 		r.With(ipRateLimiter(rdb, 3, time.Second)).Post("/refresh", auth.Refresh)
 		r.With(ipRateLimiter(rdb, 5, time.Second)).Post("/logout", auth.Logout)
 		r.With(ipRateLimiter(rdb, 2, time.Second)).Post("/verify", auth.VerifyCode)
+		r.With(ipRateLimiter(rdb, 10, time.Second)).Get("/config", auth.GetConfig)
 	})
 
 	return r

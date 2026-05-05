@@ -13,3 +13,5 @@ docker-compose.prod.yml
 .env.*
 *.key
 *.pem
+*.prod
+bin/

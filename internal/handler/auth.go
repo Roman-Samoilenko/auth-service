@@ -120,7 +120,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "refresh_token",
 		Value:    "",
 		HttpOnly: true,
-		Path:     "/auth",
+		Path:     "/api/auth",
 		MaxAge:   -1,
 	})
 	writeJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
@@ -135,7 +135,7 @@ func (h *AuthHandler) setRefreshCookie(w http.ResponseWriter, token string) {
 		HttpOnly: true,
 		Secure:   false, // true в продакшне
 		SameSite: http.SameSiteLaxMode,
-		Path:     "/auth",
+		Path:     "/api/auth",
 		Expires:  time.Now().Add(h.cfg.RefreshTokenTTL),
 	})
 }
@@ -150,4 +150,12 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+// GET /api/auth/config
+func (h *AuthHandler) GetConfig(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"access_token_ttl_seconds":  int(h.cfg.AccessTokenTTL.Seconds()),
+		"refresh_token_ttl_seconds": int(h.cfg.RefreshTokenTTL.Seconds()),
+	})
 }
