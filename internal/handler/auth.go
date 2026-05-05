@@ -34,7 +34,7 @@ func (h *AuthHandler) SendCode(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, service.ErrNoContact):
 			writeError(w, http.StatusBadRequest, "email or phone is required")
-		case errors.Is(err, service.ErrRateLimit): // ОБРАБАТЫВАЕМ НАШУ ОШИБКУ
+		case errors.Is(err, service.ErrRateLimit):
 			writeError(w, http.StatusTooManyRequests, "please wait before requesting another code")
 		default:
 			slog.Error("send code", "err", err)
@@ -133,7 +133,7 @@ func (h *AuthHandler) setRefreshCookie(w http.ResponseWriter, token string) {
 		Name:     "refresh_token",
 		Value:    token,
 		HttpOnly: true,
-		Secure:   false, // true в продакшне
+		Secure:   h.cfg.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/api/auth",
 		Expires:  time.Now().Add(h.cfg.RefreshTokenTTL),

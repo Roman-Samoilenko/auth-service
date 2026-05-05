@@ -26,7 +26,7 @@ var (
 	ErrNicknameTaken    = errors.New("nickname already taken")
 	ErrUserNotFound     = errors.New("user not found")
 	ErrNoContact        = errors.New("email or phone required")
-	ErrRateLimit        = errors.New("rate limit exceeded for this contact") // ДОБАВЛЕНО
+	ErrRateLimit        = errors.New("rate limit exceeded for this contact")
 )
 
 // reNonDigits — для нормализации номера телефона.

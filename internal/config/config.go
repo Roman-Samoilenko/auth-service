@@ -19,6 +19,7 @@ type Config struct {
 	AWSSecretAccessKEY string
 	PostboxSender      string
 	AWSRegion          string
+	CookieSecure	   bool
 }
 
 func Load() *Config {
@@ -35,6 +36,7 @@ func Load() *Config {
 		AWSSecretAccessKEY: mustEnv("AWS_SECRET_ACCESS_KEY"),
 		PostboxSender:      mustEnv("POSTBOX_SENDER"),
 		AWSRegion:          getEnv("AWS_REGION", "ru-central1"),
+		CookieSecure:       getEnv("COOKIE_SECURE", "false") == "true",
 	}
 }
 
